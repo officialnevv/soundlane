@@ -29,8 +29,14 @@ fn header(frame: &mut Frame, app: &App, area: Rect) {
 
 fn body(frame: &mut Frame, app: &App, area: Rect) {
     let columns = Layout::default().direction(Direction::Horizontal).constraints([Constraint::Percentage(68), Constraint::Percentage(32)]).split(area);
-    let chat = if app.chat.is_empty() { vec![ListItem::new(Span::styled("No messages yet — type below to chat.", Style::default().fg(Color::DarkGray)))] }
-        else { app.chat.iter().map(|line| ListItem::new(Line::from(vec![Span::styled(format!("{}: ", line.from), if line.own { Style::default().fg(Color::Cyan) } else { Style::default().fg(Color::Green) }), Span::raw(&line.text)])).collect() };
+    let chat = if app.chat.is_empty() {
+        vec![ListItem::new(Span::styled("No messages yet — type below to chat.", Style::default().fg(Color::DarkGray)))]
+    } else {
+        app.chat.iter().map(|line| {
+            let name_style = if line.own { Style::default().fg(Color::Cyan) } else { Style::default().fg(Color::Green) };
+            ListItem::new(Line::from(vec![Span::styled(format!("{}: ", line.from), name_style), Span::raw(&line.text)]))
+        }).collect()
+    };
     frame.render_widget(List::new(chat).block(Block::default().title(" Room chat ").borders(Borders::ALL)), columns[0]);
     let mut info = vec![Line::from(vec![Span::styled("Source: ", Style::default().add_modifier(Modifier::BOLD)), Span::raw(&app.source)]), Line::from(format!("Codec: Opus · {} kb/s", app.bitrate)), Line::from(format!("Uptime: {}s", app.elapsed().as_secs())), Line::from(""), Line::from(Span::styled("Participants", Style::default().add_modifier(Modifier::BOLD)))];
     if app.peers.is_empty() { info.push(Line::from(Span::styled("Waiting for a peer", Style::default().fg(Color::DarkGray)))); }
@@ -38,3 +44,4 @@ fn body(frame: &mut Frame, app: &App, area: Rect) {
     if app.mode == RoomMode::Host { info.push(Line::from("")); info.push(Line::from(Span::styled("/invite to show code", Style::default().fg(Color::Yellow)))); }
     frame.render_widget(Paragraph::new(Text::from(info)).wrap(Wrap { trim: true }).block(Block::default().title(" Session ").borders(Borders::ALL)), columns[1]);
 }
+
